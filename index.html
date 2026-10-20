@@ -91,7 +91,9 @@ button {
   border-radius: 10px; padding: 0.75rem 1.2rem; border: 1px solid var(--line);
   background: var(--page); color: var(--ink);
 }
-button.principal { background: var(--moss); color: var(--moss-ink); border-color: var(--moss); }
+button.principal, a.botao.principal { background: var(--moss); color: var(--moss-ink); border-color: var(--moss); }
+a.botao { font-weight: 700; border-radius: 10px; padding: 0.75rem 1.2rem; border: 1px solid var(--line); text-decoration: none; display: inline-block; }
+a.botao:focus-visible { outline: 3px solid var(--moss); outline-offset: 2px; }
 button:disabled { opacity: 0.55; cursor: default; }
 .navegacao { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 .navegacao .principal { margin-left: auto; }
@@ -236,6 +238,7 @@ const CRITERIOS = [
   ["corpo", "O que o corpo sentiu na visualização"],
 ];
 const LUGARES = [["sp", "São Paulo"], ["fl", "Floripa"], ["poa", "POA + viagens"]];
+const DIAGNOSTICO = "https://claude.ai/artifact/8pw59cQ5QkuGLSj4Bue2KR";
 
 /* ---------- estado (fica só neste celular) ---------- */
 const LOCAL = "caderno-do-parque-v1";
@@ -494,17 +497,22 @@ function telaFim(feitas) {
   const caixa = el("textarea", { id: "tudo", readonly: "", "aria-label": "Todas as respostas" });
   caixa.value = textoCompleto();
   const status = el("p", { class: "salvo", id: "salvo", "aria-live": "polite" });
-  const copiar = el("button", { type: "button", class: "principal", text: "Copiar todas as respostas" });
+  // O diagnóstico roda numa página do claude.ai, que pode chamar o Claude; esta página só copia e abre.
+  const gerar = el("a", { class: "botao principal", href: DIAGNOSTICO, target: "_blank", rel: "noopener", text: "Gerar meu diagnóstico" });
+  gerar.addEventListener("click", () => {
+    try { navigator.clipboard.writeText(caixa.value).then(() => { status.textContent = "Respostas copiadas. Na página que abriu, cole e toque em Gerar meu diagnóstico."; }).catch(() => {}); } catch {}
+  });
+  const copiar = el("button", { type: "button", text: "Só copiar as respostas" });
   copiar.addEventListener("click", async () => {
-    try { await navigator.clipboard.writeText(caixa.value); status.textContent = "Copiado. Agora cole na conversa com o Claude."; }
+    try { await navigator.clipboard.writeText(caixa.value); status.textContent = "Copiado."; }
     catch { caixa.focus(); caixa.select(); status.textContent = "Selecionei o texto. Toque e segure para copiar."; }
   });
   return el("article", { class: "cartao fim" },
     el("span", { class: "rotulo", text: "Fim das três caminhadas" }),
-    el("h2", { text: "Agora leve as respostas para a leitura" }),
-    el("p", { text: `Você respondeu ${feitas} de ${STEPS.length}. Copie tudo e cole na conversa com o Claude. Ele lê e te diz para onde ir, o que você quer de fato e o que deveria querer.` }),
-    el("p", { class: "dica", text: "Suas respostas ficam só neste celular. Elas não são enviadas a lugar nenhum até você copiar e colar." }),
-    el("div", { class: "navegacao" }, copiar),
+    el("h2", { text: "Agora veja o seu diagnóstico" }),
+    el("p", { text: `Você respondeu ${feitas} de ${STEPS.length}. O botão abaixo copia tudo e abre a página do diagnóstico. Lá você cola, e o Claude te mostra o que você realmente quer, o que realmente precisa, o que tem que fazer e um roadmap até outubro de 2027.` }),
+    el("p", { class: "dica", text: "A página do diagnóstico abre no claude.ai, com a sua conta. Só você vê." }),
+    el("div", { class: "navegacao" }, copiar, gerar),
     status,
     caixa);
 }
@@ -520,7 +528,7 @@ function renderIndice() {
     lista.append(el("li", {}, b));
   });
   const fim = el("button", { type: "button", onclick: () => ir(STEPS.length) },
-    el("span", { class: "marca", text: "→" }), el("span", { class: "txt", text: "Fim: copiar as respostas" }));
+    el("span", { class: "marca", text: "→" }), el("span", { class: "txt", text: "Fim: gerar o diagnóstico" }));
   if (atual >= STEPS.length) fim.setAttribute("aria-current", "true");
   lista.append(el("li", {}, fim));
 }
